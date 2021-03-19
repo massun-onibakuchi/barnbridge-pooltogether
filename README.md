@@ -1,13 +1,8 @@
 # barnbridge-pooltogether
-
+barnbridgeのjTokenを利回りのソースとしてpoolTogetherに組み込む．
 
 ## Installation
 `yarn install ` 
 
-## Typechain
-If you want to create Typechain artifacts for ethers v5, run:
-
-`yarn run typechain`
-
-## Testing
-`yarn test `
+## ToDo
+- テスト

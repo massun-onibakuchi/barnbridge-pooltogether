@@ -4,6 +4,7 @@ const { expect } = require("chai");
 const { AddressZero } = ethers.constants;
 const toWei = ethers.utils.parseEther;
 const { BigNumber } = require("ethers");
+
 const yieldSourcePrizePoolABI = require("@pooltogether/pooltogether-contracts/abis/YieldSourcePrizePool.json");
 const multipleWinnersABI = require("@pooltogether/pooltogether-contracts/abis/MultipleWinners.json");
 
@@ -28,8 +29,8 @@ describe("SushiYieldSource", function () {
   let wallet;
   let wallets;
   let yieldSource;
-  let sushiBar;
   let smartYield;
+  let sushiBar;
   let exchangeWallet;
   before(async function () {
     const exchangeWalletAddress = "0xD551234Ae421e3BCBA99A0Da6d736074f22192FF";
@@ -38,7 +39,7 @@ describe("SushiYieldSource", function () {
       params: [exchangeWalletAddress],
     });
     exchangeWallet = await waffle.provider.getSigner(exchangeWalletAddress);
-    sushi = await ethers.getVerifiedContractAt(
+    sushi = await ethers.contract(
       "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2",
       exchangeWallet
     );
@@ -48,27 +49,23 @@ describe("SushiYieldSource", function () {
     poolWithMultipleWinnersBuilder = await ethers.getVerifiedContractAt(
       "0xdA64816F76BEA59cde1ecbe5A094F6c56A7F9770"
     );
-    smartYield = await ethers.getVerifiedContractAt(
-      "0x4B8d90D68F26DEF303Dcb6CFc9b63A1aAEC15840"
-    );
     sushiDecimals = await sushi.decimals();
-    factory = await ethers.getContractFactory("JuniorTokenYieldSource");
   });
- 
+
   beforeEach(async function () {
     wallets = await ethers.getSigners();
     wallet = wallets[0];
     // setup
-    yieldSource = await factory.deploy([smartYield],{ gasLimit: 9500000 });
 
+    yieldSource = await factory.deploy({ gasLimit: 9500000 });
     const yieldSourcePrizePoolConfig = {
       yieldSource: yieldSource.address,
       maxExitFeeMantissa: toWei("0.5"),
-      maxTimelockDuration: 1000, 
+      maxTimelockDuration: 1000,
     };
     const RGNFactory = await ethers.getContractFactory("RNGServiceMock");
     rngServiceMock = await RGNFactory.deploy({ gasLimit: 9500000 });
-    let decimals = 9; 
+    let decimals = 9;
 
     const multipleWinnersConfig = {
       proxyAdmin: AddressZero,
@@ -107,82 +104,79 @@ describe("SushiYieldSource", function () {
     );
 
     // get some sushi
-    // await sushi.transfer(
-    //   wallet.address,
-    //   BigNumber.from(1000).mul(BigNumber.from(10).pow(sushiDecimals))
-    // );
+    await sushi.transfer(
+      wallet.address,
+      BigNumber.from(1000).mul(BigNumber.from(10).pow(sushiDecimals))
+    );
   });
 
   it("get token address", async function () {
-    // console.log('wallet.address :>> ', wallet.address);
-    // console.log('sushi.address :>> ', sushi.address);
-    // console.log('await sushi.totalSupply() :>> ', await sushi.totalSupply());
-    // expect((await yieldSource.token()) == sushi);
+    expect((await yieldSource.token()) == sushi);
   });
 
-  // it("should be able to get underlying balance", async function () {
-  //   await sushi.connect(wallet).approve(prizePool.address, toWei("100"));
-  //   let [token] = await prizePool.tokens();
+  it("should be able to get underlying balance", async function () {
+    await sushi.connect(wallet).approve(prizePool.address, toWei("100"));
+    let [token] = await prizePool.tokens();
 
-  //   await prizePool.depositTo(
-  //     wallet.address,
-  //     toWei("100"),
-  //     token,
-  //     wallets[1].address
-  //   );
-  //   expect(await sushiBar.balanceOf(prizePool.address)) != 0;
-  // });
+    await prizePool.depositTo(
+      wallet.address,
+      toWei("100"),
+      token,
+      wallets[1].address
+    );
+    // expect(await sushiBar.balanceOf(prizePool.address)) != 0;
+  });
 
-  // it("should be able to withdraw", async function () {
-  //   await sushi.connect(wallet).approve(prizePool.address, toWei("100"));
-  //   let [token] = await prizePool.tokens();
+  it("should be able to withdraw", async function () {
+    await sushi.connect(wallet).approve(prizePool.address, toWei("100"));
+    let [token] = await prizePool.tokens();
 
-  //   await prizePool.depositTo(
-  //     wallet.address,
-  //     toWei("100"),
-  //     token,
-  //     wallets[1].address
-  //   );
-  //   expect(await sushiBar.balanceOf(prizePool.address)) != 0;
+    await prizePool.depositTo(
+      wallet.address,
+      toWei("100"),
+      token,
+      wallets[1].address
+    );
+    // expect(await sushiBar.balanceOf(prizePool.address)) != 0;
 
-  //   const balanceBefore = await sushi.balanceOf(wallet.address);
-  //   await prizePool.withdrawInstantlyFrom(
-  //     wallet.address,
-  //     toWei("1"),
-  //     token,
-  //     1000
-  //   );
-  //   expect(await sushiBar.balanceOf(wallet.address)) > balanceBefore;
-  // });
+    const balanceBefore = await sushi.balanceOf(wallet.address);
+    await prizePool.withdrawInstantlyFrom(
+      wallet.address,
+      toWei("1"),
+      token,
+      1000
+    );
+    // expect(await sushiBar.balanceOf(wallet.address)) > balanceBefore;
+  });
 
-  // it("should be able to withdraw all", async function () {
-  //   await sushi.connect(wallet).approve(prizePool.address, toWei("100"));
-  //   let [token] = await prizePool.tokens();
+  it("should be able to withdraw all", async function () {
+    await sushi.connect(wallet).approve(prizePool.address, toWei("100"));
+    let [token] = await prizePool.tokens();
 
-  //   const initialBalance = await sushi.balanceOf(wallet.address);
+    const initialBalance = await sushi.balanceOf(wallet.address);
 
-  //   await prizePool.depositTo(
-  //     wallet.address,
-  //     toWei("100"),
-  //     token,
-  //     wallets[1].address
-  //   );
+    await prizePool.depositTo(
+      wallet.address,
+      toWei("100"),
+      token,
+      wallets[1].address
+    );
 
-  //   expect(await sushiBar.balanceOf(prizePool.address)) != 0;
+    // expect(await sushiBar.balanceOf(prizePool.address)) != 0;
 
-  //   hre.network.provider.send("evm_increaseTime", [1000]);
+    hre.network.provider.send("evm_increaseTime", [1000]);
 
-  //   await expect(
-  //     prizePool.withdrawInstantlyFrom(wallet.address, toWei("200"), token, 0)
-  //   ).to.be.reverted;
+    await expect(
+      prizePool.withdrawInstantlyFrom(wallet.address, toWei("200"), token, 0)
+    ).to.be.reverted;
 
-  //   await prizePool.withdrawInstantlyFrom(
-  //     wallet.address,
-  //     toWei("100"),
-  //     token,
-  //     0
-  //   );
+    await prizePool.withdrawInstantlyFrom(
+      wallet.address,
+      toWei("100"),
+      token,
+      0
+    );
 
-  //   expect(await sushi.balanceOf(wallet.address)) == initialBalance;
-  // });
+    expect(await sushi.balanceOf(wallet.address)) == initialBalance;
+  });
 });

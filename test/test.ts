@@ -10,7 +10,7 @@ const provider = waffle.provider;
 const toWei = ethers.utils.parseEther;
 
 async function getEvents(contract, tx) {
-  let receipt = await provider.getTransactionReceipt(tx.hash);
+  const receipt = await provider.getTransactionReceipt(tx.hash);
   return receipt.logs.reduce((parsedEvents, log) => {
     try {
       parsedEvents.push(contract.interface.parseLog(log));
