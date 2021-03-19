@@ -9,19 +9,23 @@ import "./barnbridge/ISmartYield.sol"
 import "./barnbridge/IProvider.sol"
 import "./barnbridge/ComoundController.sol"
 
-contract BBCTokenYieldSource is IYeildSource,IJuniorTokenYieldSource {
+contract BBCTokenYieldSource is IYeildSource {
     using SafeMath for uint256;
 
-    uint256 constant EXP_SCALE = 10e18
-    address constant UNDERLYING_TOKEN_ADDR = 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+    event bbcYieldSourceInitialized(address indexed smartYield);
+
+    uint256 constant EXP_SCALE = 10e18;
+    // address constant UNDERLYING_TOKEN_ADDR = 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48;
     address public immutable uTokenAddr;
     address public immutable syAddr;
     mapping(address => uint256) public balances;
 
     constructor(ISmartYield _sy){
         pool = CompoundController(_sy.controller()).pool();
-        uTokenAddr =ICompoundProvider(pool).utoken();
+        uTokenAddr =ICompoundProvider(pool).uToken();
+        require(uTokenAddr != address(0),"INVALID_UNDELYING_TOKEN_ADDRESS");
         syAddr = address(_sy);
+        emit bbcYieldSourceInitialized(syAddr)
     }
 
     function token() public view override returns(address){
@@ -30,64 +34,53 @@ contract BBCTokenYieldSource is IYeildSource,IJuniorTokenYieldSource {
 
     /// @notice Returns the total balance (in asset tokens).  This includes the deposits and interest.
     /// @return The underlying balance of asset tokens
-    function balanceOf(address addr) external view override returns(uint256){
+    function balanceOf(address addr) public view override returns(uint256){
         ISmartYield sy = ISmartYield(syAddr);
         uint256 tokenAmount = sy.balanceOf(addr);
         // share of these tokens in the debt
         // tokenAmount * EXP_SCALE / totalSupply()
         uint256 debtShare = tokenAmount.mul(EXP_SCALE).div(sy.totalSupply());
         // (abondDebt() * debtShare) / EXP_SCALE
-        uint256 forfeits = abondDebt().mul(debtShare).div(EXP_SCALE);
+        uint256 forfeits = sy.abondDebt().mul(debtShare).div(EXP_SCALE);
         // debt share is forfeit, and only diff is returned to user
         // (tokenAmount * price()) / EXP_SCALE - forfeits
         return tokenAmount.mul(sy.price()).div(EXP_SCALE).sub(forfeits);
     }
 
-    function supplyTo(uint256 amount,address to) external override {
+    function supplyTo(uint256 amount,address to) public override {
         token().transferFrom(msg.sender, address(this), amount);
-        token().approve(smartYield, amount);
+        token().approve(syAddr, amount);
 
-        ISmartYield smartYield = ISmartYield(syAddr);
-        uint256 beforeBalance = smartYield.balanceOf(address(this));
+        ISmartYield sy = ISmartYield(syAddr);
+        uint256 beforeBalance = sy.balanceOf(address(this));
 
         minTokens = amount.mul(8).div(10);
-        deadline = getCurrentTimestamp().add(54000) // 15*3600
-        smartYield.buyTokens(amount,minTokens,deadline);
-        uint256 afterBalance = smartYield.balanceOf(address(this));
+        deadline = block.timestamp.add(72000) // 20*3600
+        sy.buyTokens(amount, minTokens, deadline);
+        uint256 afterBalance = sy.balanceOf(address(this));
         uint256 balanceDiff = afterBalance.sub(beforeBalance);
         balances[to] = balances[to].add(balanceDiff);
     }
 
-    function redeem(uint256 amount) external override returns(uint256){
+    function redeem(uint256 amount) public override returns(uint256){
         ISmartYield sy = ISmartYield(syAddr);
-        IERC20 token = IERC20(UNDERLYING_TOKEN_ADDR);
+        IERC20 token = IERC20(uTokenAddr);
 
-        uint256 totalShares = sy.totalSupply();
-        uint256 syTokenBalance = token.balanceOf(address(sy));
-        uint256 requiredShares = amount.mul(totalShares).div(syTokenBalance);
+        uint256 syBalanceBefore = sy.balanceOf(address(this));
+        // uint256 syTokenBalance = token.balanceOf(address(sy));
+        uint256 tokenBalanceBefore = token.balanceOf(address(this));
 
-        uint256 syBeforeBalance = sy.balanceOf(address(this));
-        uint256 tokenBeforeBalance = token.balanceOf(address(this));
+        deadline = block.timestamp.add(72000) // 20*3600
+        sy.sellTokens(amount, 0, deadline);
 
-        sy.leave(requiredShares);
+        uint256 syBalanceAfter = smartYield.balanceOf(address(this));
+        uint256 tokenBalanceAfter = token.balanceOf(address(this));
 
-        uint256 syAfterBalance = sy.balanceOf(address(this));
-        uint256 tokenAfterBalance = token.balanceOf(address(this));
-
-        uint256 syBalanceDiff = syBeforeBalance.sub(syAfterBalance);
-        uint256 tokenBalanceDiff = tokenAfterBalance.sub(tokenBeforeBalance);
+        uint256 syBalanceDiff = syBalanceBefore.sub(syBalanceAfter);
+        uint256 tokenBalanceDiff = tokenBalanceAfter.sub(tokenBalanceBefore);
 
         balances[msg.sender] = balances[msg.sender].sub(syBalanceDiff);
-        sushi.transfer(msg.sender, tokenBalanceDiff);
+        token.transfer(msg.sender, tokenBalanceDiff);
         return tokenBalanceDiff;
     }
-
-    function getCurrentTimestamp() internal pure returns(uint256){
-        return block.timestamp
-    }
-
-}
-
-interface IJuniorTokenYieldSource {
-    event JuniorTokenYieldSourceInitialized(address indexed smartYield)
 }

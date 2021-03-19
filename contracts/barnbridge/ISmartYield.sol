@@ -3,7 +3,6 @@ pragma solidity ^0.7.6;
 pragma abicoder v2;
 
 interface ISmartYield {
-
     // a senior BOND (metadata for NFT)
     struct SeniorBond {
         // amount seniors put in
@@ -36,20 +35,37 @@ interface ISmartYield {
 
     function controller() external view returns (address);
 
-    function buyBond(uint256 principalAmount_, uint256 minGain_, uint256 deadline_, uint16 forDays_) external returns (uint256);
+    function buyBond(
+        uint256 principalAmount_,
+        uint256 minGain_,
+        uint256 deadline_,
+        uint16 forDays_
+    ) external returns (uint256);
 
     function redeemBond(uint256 bondId_) external;
 
     function unaccountBonds(uint256[] memory bondIds_) external;
 
-    function buyTokens(uint256 underlyingAmount_, uint256 minTokens_, uint256 deadline_) external;
+    function buyTokens(
+        uint256 underlyingAmount_,
+        uint256 minTokens_,
+        uint256 deadline_
+    ) external;
 
     /**
      * sell all tokens instantly
      */
-    function sellTokens(uint256 tokens_, uint256 minUnderlying_, uint256 deadline_) external;
+    function sellTokens(
+        uint256 tokens_,
+        uint256 minUnderlying_,
+        uint256 deadline_
+    ) external;
 
-    function buyJuniorBond(uint256 tokenAmount_, uint256 maxMaturesAt_, uint256 deadline_) external;
+    function buyJuniorBond(
+        uint256 tokenAmount_,
+        uint256 maxMaturesAt_,
+        uint256 deadline_
+    ) external;
 
     function redeemJuniorBond(uint256 jBondId_) external;
 
@@ -78,7 +94,9 @@ interface ISmartYield {
 
     function underlyingJuniors() external returns (uint256);
 
-    function bondGain(uint256 principalAmount_, uint16 forDays_) external returns (uint256);
+    function bondGain(uint256 principalAmount_, uint16 forDays_)
+        external
+        returns (uint256);
 
     function maxBondDailyRate() external returns (uint256);
 

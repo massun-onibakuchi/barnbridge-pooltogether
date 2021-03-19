@@ -9,11 +9,11 @@ interface ICompoundProvider is IProvider {
 
     function cToken() external view;
 
-    function smartYield() external override view returns (address);
+    function smartYield() external view override returns (address);
 
-    function controller() external override view returns (address);
+    function controller() external view override returns (address);
 
-    function underlyingFees() external override view returns (uint256);
+    function underlyingFees() external view override returns (uint256);
 
     function setup(address smartYield_, address controller_) external;
 

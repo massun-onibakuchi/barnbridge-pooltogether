@@ -3,7 +3,6 @@ pragma solidity ^0.7.6;
 pragma abicoder v2;
 
 interface IProvider {
-
     function smartYield() external view returns (address);
 
     function controller() external view returns (address);
@@ -11,10 +10,12 @@ interface IProvider {
     function underlyingFees() external view returns (uint256);
 
     // deposit underlyingAmount_ into provider, add takeFees_ to fees
-    function _depositProvider(uint256 underlyingAmount_, uint256 takeFees_) external;
+    function _depositProvider(uint256 underlyingAmount_, uint256 takeFees_)
+        external;
 
     // withdraw underlyingAmount_ from provider, add takeFees_ to fees
-    function _withdrawProvider(uint256 underlyingAmount_, uint256 takeFees_) external;
+    function _withdrawProvider(uint256 underlyingAmount_, uint256 takeFees_)
+        external;
 
     function _takeUnderlying(address from_, uint256 amount_) external;
 
