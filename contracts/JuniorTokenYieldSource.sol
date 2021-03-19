@@ -7,21 +7,25 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IYeildSource.sol"
 import "./barnbridge/ISmartYield.sol"
 import "./barnbridge/IProvider.sol"
+import "./barnbridge/ComoundController.sol"
 
 contract BBCTokenYieldSource is IYeildSource,IJuniorTokenYieldSource {
     using SafeMath for uint256;
 
     uint256 constant EXP_SCALE = 10e18
     address constant UNDERLYING_TOKEN_ADDR = 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+    address public immutable uTokenAddr;
     address public immutable syAddr;
     mapping(address => uint256) public balances;
 
     constructor(ISmartYield _sy){
+        pool = CompoundController(_sy.controller()).pool();
+        uTokenAddr =ICompoundProvider(pool).utoken();
         syAddr = address(_sy);
     }
 
     function token() public view override returns(address){
-        return UNDERLYING_TOKEN_ADDR
+        return uTokenAddr;
     }
 
     /// @notice Returns the total balance (in asset tokens).  This includes the deposits and interest.
