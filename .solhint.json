@@ -1,0 +1,7 @@
+{
+    "extends": "solhint:recommended",
+    "rules": {
+        "func-order": "off",
+        "no-empty-blocks": "off"
+    }
+}
