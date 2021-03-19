@@ -6,22 +6,27 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IYeildSource.sol"
 import "./barnbridge/ISmartYield.sol"
+import "./barnbridge/ICompoundProvider.sol"
+import "./barnbridge/IProvider.sol"
 
-contract JuniorTokenYieldSource is IYeildSource,IJuniorTokenYieldSource {
+contract BBCTokenYieldSource is IYeildSource,IJuniorTokenYieldSource {
     using SafeMath for uint256;
 
     uint256 constant EXP_SCALE = 10e18
     address public immutable syAddr;
-    address public immutable underlyingAddr;
     mapping(address => uint256) public balances;
 
-    constructor(ISmartYield  _smartYield,IERC20 _underlyingToken){
-        syAddr = address(_smartYield);
-        underlyingAddr = address(_underlyingToken)
+    constructor(ISmartYield  _sy){
+        // _sy.pool()
+        // syAddr = address(_sy);
+        pool = Controller(_sy.controller()).pool();
+        pool.uToken();
+        syAddr = address(_sy);
     }
 
     function token() public view override returns(address){
-        return ISmartYield(syAddr).token;()
+        sy = ISmartYield(syAddr);
+        return ICompoundProvider(sy.pool()).uToken();
     }
 
     /// @notice Returns the total balance (in asset tokens).  This includes the deposits and interest.
@@ -78,6 +83,7 @@ contract JuniorTokenYieldSource is IYeildSource,IJuniorTokenYieldSource {
         sushi.transfer(msg.sender, sushiBalanceDiff);
         return (sushiBalanceDiff);
     }
+
     function getCurrentTimestamp() internal pure returns(uint256){
         return block.timestamp
     }
