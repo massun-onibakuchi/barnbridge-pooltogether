@@ -5,9 +5,9 @@ pragma abicoder v2;
 import "./IProvider.sol";
 
 interface ICompoundProvider is IProvider {
-    function uToken() external view;
+    function uToken() external view returns (address);
 
-    function cToken() external view;
+    function cToken() external view returns (address);
 
     function smartYield() external view override returns (address);
 
@@ -22,26 +22,16 @@ interface ICompoundProvider is IProvider {
     function updateAllowances() external;
 
     // take underlyingAmount_ from from_
-    function _takeUnderlying(address from_, uint256 underlyingAmount_)
-        external
-        view
-        override;
+    function _takeUnderlying(address from_, uint256 underlyingAmount_) external view override;
 
     // transfer away underlyingAmount_ to to_
-    function _sendUnderlying(address to_, uint256 underlyingAmount_)
-        external
-        view
-        override;
+    function _sendUnderlying(address to_, uint256 underlyingAmount_) external view override;
 
     // deposit underlyingAmount_ with the liquidity provider, callable by smartYield or controller
-    function _depositProvider(uint256 underlyingAmount_, uint256 takeFees_)
-        external
-        override;
+    function _depositProvider(uint256 underlyingAmount_, uint256 takeFees_) external override;
 
     // withdraw underlyingAmount_ from the liquidity provider, callable by smartYield
-    function _withdrawProvider(uint256 underlyingAmount_, uint256 takeFees_)
-        external
-        override;
+    function _withdrawProvider(uint256 underlyingAmount_, uint256 takeFees_) external override;
 
     function transferFees() external override;
 

@@ -1,9 +1,14 @@
+import 'dotenv/config';
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
-import "hardhat-typechain";
 import { HardhatUserConfig } from "hardhat/config";
+import "hardhat-typechain";
+import "hardhat-etherscan-abi";
 
+const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+const BLOCK_NUMBER = process.env.BLOCK_NUMBER;
 const PROJECT_ID = "";
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -29,6 +34,10 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8545"
     },
     hardhat: {
+      forking: {
+        url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+        // blockNumber: BLOCK_NUMBER
+      }
     },
     // rinkeby: {
     // url: "https://rinkeby.infura.io/v3/" + PROJECT_ID,
@@ -40,16 +49,18 @@ const config: HardhatUserConfig = {
     //   count:10
     // }
     //https://hardhat.org/config/#hd-wallet-config
-    // }
+  },
+  etherscan:{
+    apiKey:ETHERSCAN_API_KEY
   },
   solidity: {
     compilers: [
       {
-        version: ">=0.7.0 <0.8.0",
+        version: "0.7.6",
         settings: {
           "outputSelection": {
             "*": {
-            "*": [
+              "*": [
                 "evm.bytecode.object",
                 "evm.deployedBytecode.object",
                 "abi",

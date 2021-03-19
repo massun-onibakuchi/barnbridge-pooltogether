@@ -2,7 +2,9 @@
 pragma solidity ^0.7.6;
 pragma abicoder v2;
 
-interface ISmartYield {
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+interface ISmartYield is IERC20 {
     // a senior BOND (metadata for NFT)
     struct SeniorBond {
         // amount seniors put in
@@ -94,9 +96,7 @@ interface ISmartYield {
 
     function underlyingJuniors() external returns (uint256);
 
-    function bondGain(uint256 principalAmount_, uint16 forDays_)
-        external
-        returns (uint256);
+    function bondGain(uint256 principalAmount_, uint16 forDays_) external returns (uint256);
 
     function maxBondDailyRate() external returns (uint256);
 
